@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ระบบคำนวณทบไม้</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #161a23;
+      --surface2: #1e2431;
+      --border: #2a3145;
+      --accent: #f0b429;
+      --accent2: #3dd68c;
+      --danger: #f87171;
+      --warn: #fb923c;
+      --text: #e8eaf0;
+      --muted: #6b7280;
+      --green: #3dd68c;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'IBM Plex Sans Thai', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+
+    .wrapper {
+      max-width: 860px;
+      margin: auto;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--accent);
+    }
+
+    .header p {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 6px;
+    }
+
+    /* Input Grid */
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .field label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .field input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 11px 14px;
+      font-size: 15px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text);
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+
+    .field input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .field .hint {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* Calc Button */
+    .calc-btn {
+      width: 100%;
+      padding: 13px;
+      background: var(--accent);
+      color: #0d0f14;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 24px;
+      font-family: 'IBM Plex Sans Thai', sans-serif;
+      letter-spacing: 0.5px;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    .calc-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .calc-btn:active { transform: translateY(0); }
+
+    /* Table */
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    thead tr {
+      background: var(--surface2);
+    }
+
+    th {
+      padding: 13px 16px;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 12px 16px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+    }
+
+    tbody tr:last-child td { border-bottom: none; }
+
+    tbody tr:hover { background: rgba(255,255,255,0.03); }
+
+    .step-badge {
+      display: inline-block;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .profit-pos { color: var(--green); font-weight: 700; }
+    .profit-neg { color: var(--danger); font-weight: 700; }
+
+    /* Summary Cards */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .card .card-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      margin-bottom: 8px;
+    }
+
+    .card .card-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .card-value.green { color: var(--green); }
+    .card-value.yellow { color: var(--accent); }
+    .card-value.red { color: var(--danger); }
+    .card-value.orange { color: var(--warn); }
+
+    /* Analysis */
+    .analysis {
+      margin-top: 16px;
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-size: 14px;
+      line-height: 1.7;
+      border-left: 4px solid;
+    }
+
+    .analysis.safe { background: rgba(61,214,140,0.08); border-color: var(--green); }
+    .analysis.warn { background: rgba(251,146,60,0.1); border-color: var(--warn); }
+    .analysis.danger { background: rgba(248,113,113,0.1); border-color: var(--danger); }
+
+    @media (max-width: 500px) {
+      .header h1 { font-size: 22px; }
+      td, th { padding: 10px 8px; font-size: 12px; }
+    }
+  </style>
+</head>
+
+<body>
+<div class="wrapper">
+
+  <div class="header">
+    <h1>⚡ ระบบคำนวณทบไม้</h1>
+    <p>Martingale Calculator — คำนวณต้นทุน กำไร และความเสี่ยงแต่ละไม้</p>
+  </div>
+
+  <!-- Inputs -->
+  <div class="input-grid">
+    <div class="field">
+      <label>ทุนทั้งหมด (บาท)</label>
+      <input type="number" id="capital" value="1000">
+    </div>
+    <div class="field">
+      <label>ไม้แรก (บาท)</label>
+      <input type="number" id="firstBet" value="120">
+    </div>
+    <div class="field">
+      <label>อัตราทบ (เท่า)</label>
+      <input type="number" id="multiplier" step="0.001" value="2.236">
+    </div>
+    <div class="field">
+      <label>จำนวนไม้</label>
+      <input type="number" id="steps" min="1" max="10" value="3">
+    </div>
+    <div class="field">
+      <label>อัตราการจ่าย (%)</label>
+      <input type="number" id="payout" step="0.1" value="86">
+      <span class="hint">เช่น 86 = จ่าย 86% ของที่วาง</span>
+    </div>
+  </div>
+
+  <button class="calc-btn" onclick="calculate()">คำนวณ</button>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ไม้</th>
+          <th>เงินลงทุน</th>
+          <th>ทุนสะสม</th>
+          <th>ได้รับเมื่อชนะ</th>
+          <th>กำไรสุทธิ</th>
+        </tr>
+      </thead>
+      <tbody id="resultTable"></tbody>
+    </table>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="cards" id="cards"></div>
+
+  <!-- Analysis -->
+  <div class="analysis" id="analysis"></div>
+
+</div>
+
+<script>
+  function fmt(n) {
+    return Math.round(n).toLocaleString('th-TH');
+  }
+
+  function calculate() {
+    const capital    = parseFloat(document.getElementById('capital').value) || 0;
+    const firstBet   = parseFloat(document.getElementById('firstBet').value) || 0;
+    const multiplier = parseFloat(document.getElementById('multiplier').value) || 1;
+    const steps      = parseInt(document.getElementById('steps').value) || 1;
+    const payout     = parseFloat(document.getElementById('payout').value) / 100 || 0.86;
+
+    const tbody = document.getElementById('resultTable');
+    tbody.innerHTML = '';
+
+    let current = firstBet;
+    let cumulative = 0;
+
+    for (let i = 1; i <= steps; i++) {
+      cumulative += current;
+
+      // กำไรสุทธิ = (ไม้นี้ × อัตราจ่าย) − ขาดทุนสะสมจากไม้ก่อนหน้า
+      const prevLosses = cumulative - current;
+      const winReturn  = current * payout;          // เงินได้รับเพิ่ม (ไม่รวมทุนคืน)
+      const totalReturn = current + winReturn;       // รวมทุนคืน + กำไร
+      const netProfit  = winReturn - prevLosses;     // กำไรสุทธิหลังหักขาดทุนก่อนหน้า
+
+      const profitClass = netProfit >= 0 ? 'profit-pos' : 'profit-neg';
+      const profitSign  = netProfit >= 0 ? '+' : '';
+
+      tbody.innerHTML += `
+        <tr>
+          <td><span class="step-badge">ไม้ ${i}</span></td>
+          <td>${fmt(current)} ฿</td>
+          <td>${fmt(cumulative)} ฿</td>
+          <td>${fmt(totalReturn)} ฿</td>
+          <td class="${profitClass}">${profitSign}${fmt(netProfit)} ฿</td>
+        </tr>
+      `;
+
+      current *= multiplier;
+    }
+
+    // Summary
+    const remain      = capital - cumulative;
+    const riskPct     = (cumulative / capital) * 100;
+    const maxProfit   = firstBet * payout;   // กำไรที่ไม้แรก (กรณีดีสุด)
+
+    let cardsHtml = `
+      <div class="card">
+        <div class="card-label">ทุนที่ใช้ทั้งหมด</div>
+        <div class="card-value yellow">${fmt(cumulative)} ฿</div>
+      </div>
+      <div class="card">
+        <div class="card-label">ทุนคงเหลือ</div>
+        <div class="card-value ${remain < 0 ? 'red' : 'green'}">${fmt(remain)} ฿</div>
+      </div>
+      <div class="card">
+        <div class="card-label">ใช้ทุนไป (%)</div>
+        <div class="card-value ${riskPct >= 80 ? 'red' : riskPct >= 50 ? 'orange' : 'green'}">${riskPct.toFixed(1)}%</div>
+      </div>
+      <div class="card">
+        <div class="card-label">อัตราการจ่าย</div>
+        <div class="card-value yellow">${(payout * 100).toFixed(1)}%</div>
+      </div>
+    `;
+    document.getElementById('cards').innerHTML = cardsHtml;
+
+    // Analysis
+    let msg = '';
+    let cls = 'safe';
+
+    if (remain < 0) {
+      msg = '⛔ ทุนไม่เพียงพอสำหรับจำนวนไม้ที่กำหนด — กรุณาลดไม้หรือเพิ่มทุน';
+      cls = 'danger';
+    } else if (riskPct >= 80) {
+      msg = '⚠️ ความเสี่ยงสูงมาก — ใช้ทุนเกิน 80% ของพอร์ต ถ้าแพ้ครบทุกไม้จะเหลือทุนน้อยมาก';
+      cls = 'danger';
+    } else if (riskPct >= 50) {
+      msg = '⚠️ ความเสี่ยงค่อนข้างสูง — ใช้ทุนเกินครึ่งพอร์ต ควรระวังเป็นพิเศษ';
+      cls = 'warn';
+    } else {
+      msg = '✅ โครงสร้างทุนยังอยู่ในระดับที่พอควบคุมได้';
+      cls = 'safe';
+    }
+
+    msg += `<br>📊 ใช้ทุน ${riskPct.toFixed(1)}% | อัตราจ่าย ${(payout*100).toFixed(1)}% | กำไรสุทธิไม้แรก <strong>+${fmt(maxProfit)} ฿</strong>`;
+
+    const el = document.getElementById('analysis');
+    el.innerHTML = msg;
+    el.className = 'analysis ' + cls;
+  }
+
+  calculate();
+</script>
+</body>
+</html>
